@@ -13,19 +13,19 @@ import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
 import { computed, toRaw } from "vue";
 import prestige from "./layers/prestige";
+import matter from "./layers/matter";
 
 /**
  * @hidden
  */
 export const main = createLayer("main", () => {
-    const points = createResource<DecimalSource>(10);
+    const points = createResource<DecimalSource>(0);
     const best = trackBest(points);
     const total = trackTotal(points);
 
     const pointGain = computed(() => {
         // eslint-disable-next-line prefer-const
-        let gain = new Decimal(1);
-        return gain;
+        return Decimal.dZero;
     });
     globalBus.on("update", diff => {
         points.value = Decimal.add(points.value, Decimal.times(pointGain.value, diff));
@@ -33,7 +33,7 @@ export const main = createLayer("main", () => {
     const oomps = trackOOMPS(points, pointGain);
 
     const tree = createTree(() => ({
-        nodes: [[prestige.treeNode]],
+        nodes: [[matter.treeNode]],
         branches: [],
         onReset() {
             points.value = toRaw(this.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
@@ -80,7 +80,7 @@ export const main = createLayer("main", () => {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<PlayerData>
-): Array<GenericLayer> => [main, prestige];
+): Array<GenericLayer> => [main, matter];
 
 /**
  * A computed ref whose value is true whenever the game is over.
