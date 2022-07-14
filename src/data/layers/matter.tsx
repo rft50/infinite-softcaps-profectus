@@ -23,23 +23,28 @@ const layer = createLayer(id, () => {
     const name = "Matter";
     const color = "#336BDC";
 
+    function costBuyableCount(buyable: any) {
+        let x = buyable.amount.value
+        x = Decimal.sub(x, cosineEffect.value)
+        return x
+    }
+
     // upgrades
 
     const foundationSineEffect = computed(() => {return Decimal.div(sineBuyable.amount.value, 10)})
 
     const foundationSineUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 40,
+        cost: 700,
         display: {
             title: "Sine Foundation",
-            description: `Increase Foundation's effect by 0.1 per Sine bought<br>
-                Currently ${format(foundationSineEffect.value)}`
+            description: `Increase Foundation's effect by 0.1 per Sine bought`
         }
     }))
 
     const sineBoostUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 250,
+        cost: 5e3,
         display: {
             title: "Sine Boost",
             description: `Multiply Sine's minimum by 1.5 and maximum by 2, per upgrade purchased`
@@ -48,17 +53,37 @@ const layer = createLayer(id, () => {
 
     const logarithmUnlockUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1800,
+        cost: 40e3,
         display: {
             title: "Logarithm Unlock",
-            description: `Unlock Logarithm, which increases length based on matter`
+            description: `Unlock Logarithm, which increases Foundation's effect based on matter`
+        }
+    }))
+
+    const logarithmFoundationUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 600e3,
+        display: {
+            title: "Logarithm Foundation",
+            description: `Increase Logarithm's exponent by 0.01 per Foundation bought`
+        }
+    }))
+
+    const cosineUnlockUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 15e6,
+        display: {
+            title: "Cosine Unlock",
+            description: `Unlock Cosine, which decreases buyable levels for cost purposes`
         }
     }))
 
     const upgradeData = {
         foundationSine: foundationSineUpgrade,
         sineBoost: sineBoostUpgrade,
-        logarithmUnlock: logarithmUnlockUpgrade
+        logarithmUnlock: logarithmUnlockUpgrade,
+        logarithmFoundation: logarithmFoundationUpgrade,
+        cosineUnlockUpgrade: cosineUnlockUpgrade
     }
 
     const upgradeCount = computed(() => {
@@ -69,6 +94,7 @@ const layer = createLayer(id, () => {
 
     const foundationLength = computed(() => {
         let foundationLength = new Decimal(1)
+        foundationLength = foundationLength.add(Decimal.mul(logarithmBuyable.amount.value, logarithmLength.value))
         if (foundationSineUpgrade.bought.value) foundationLength = foundationLength.add(foundationSineEffect.value)
         return foundationLength
     })
@@ -76,7 +102,7 @@ const layer = createLayer(id, () => {
     const foundationBuyable = createBuyable(() => ({
         resource: points,
         cost() {
-            let x = new Decimal(this.amount.value)
+            let x = costBuyableCount(this)
             return Decimal.pow(1.2, x)
         },
         display() {
@@ -87,20 +113,26 @@ const layer = createLayer(id, () => {
         }
     }))
 
+    const logarithmExponent = computed(() => {
+        let exp = new Decimal(1)
+        if (logarithmFoundationUpgrade.bought.value) exp = exp.add(Decimal.div(foundationBuyable.amount.value, 100))
+        return exp
+    })
+
     const logarithmLength = computed(() => {
-        return Decimal.pow(Decimal.log10(Decimal.max(10, points.value)), 2)
+        return Decimal.div(Decimal.pow(Decimal.log10(Decimal.max(10, points.value)), logarithmExponent.value), 10)
     })
 
     const logarithmBuyable = createBuyable(() => ({
         resource: points,
         cost() {
-            let x = new Decimal(this.amount.value)
-            return Decimal.mul(100, new Decimal(1.5).pow(x))
+            let x = costBuyableCount(this)
+            return Decimal.mul(100, Decimal.pow(1.4, x))
         },
         display() {
             return {
                 title: "Logarithm",
-                description: `Increases length by log<sub>10</sub>(matter)<sup>2</sup><br>
+                description: `Increases Foundation's effect by log<sub>10</sub>(matter)<sup>${format(logarithmExponent.value)}</sup>/10<br>
                     Currently ${format(logarithmLength.value)}`
             }
         },
@@ -110,14 +142,14 @@ const layer = createLayer(id, () => {
     }))
 
     const sineMin = computed(() => {
-        let count = new Decimal(0.01)
+        let count = new Decimal(0.1)
 
         if (sineBoostUpgrade.bought.value) count = count.mul(Decimal.pow(1.5, upgradeCount.value))
 
         return count
     })
     const sineMax = computed(() => {
-        let count = new Decimal(0.1)
+        let count = new Decimal(1)
 
         if (sineBoostUpgrade.bought.value) count = count.mul(Decimal.pow(2, upgradeCount.value))
 
@@ -135,8 +167,8 @@ const layer = createLayer(id, () => {
     const sineBuyable = createBuyable(() => ({
         resource: points,
         cost() {
-            let x = new Decimal(this.amount.value)
-            return Decimal.mul(4, new Decimal(1.25).pow(x))
+            let x = costBuyableCount(this)
+            return Decimal.mul(10, Decimal.pow(1.25, x))
         },
         display() {
             return {
@@ -147,10 +179,37 @@ const layer = createLayer(id, () => {
         }
     }))
 
+    const cosineTempo = computed(() => {return (Math.cos(player.time * Math.PI / 180 / 120) + 1) / 2})
+    const cosineValue = computed(() => {
+        return Decimal.mul(Decimal.sub(1, cosineTempo.value), 0.5)
+    })
+    const cosineEffect = computed(() => {
+        return Decimal.mul(cosineBuyable.amount.value, cosineValue.value)
+    })
+
+    const cosineBuyable = createBuyable(() => ({
+        resource: points,
+        cost() {
+            let x = costBuyableCount(this)
+            return Decimal.mul(1e3, Decimal.pow(1.5, x))
+        },
+        display() {
+            return {
+                title: "Cosine",
+                description: `Decreases buyable count for cost purposes of all matter buyables, by up to 0.5<br>
+                    Currently ${format(cosineValue.value)}`
+            }
+        },
+        visibility() {
+            return cosineUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
+        }
+    }))
+
     const buyableData = {
         foundation: foundationBuyable,
+        logarithm: logarithmBuyable,
         sine: sineBuyable,
-        logarithm: logarithmBuyable
+        cosine: cosineBuyable
     }
 
     // points
@@ -190,8 +249,8 @@ const layer = createLayer(id, () => {
             <>
                 <MainDisplay resource={points} color={color} />
                 {renderRow(foundationBuyable, logarithmBuyable)}
-                {renderRow(sineBuyable)}
-                {renderRow(foundationSineUpgrade, sineBoostUpgrade, logarithmUnlockUpgrade)}
+                {renderRow(sineBuyable, cosineBuyable)}
+                {renderRow(foundationSineUpgrade, sineBoostUpgrade, logarithmUnlockUpgrade, logarithmFoundationUpgrade, cosineUnlockUpgrade)}
             </>
         )),
         treeNode,
