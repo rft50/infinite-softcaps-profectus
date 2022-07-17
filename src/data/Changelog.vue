@@ -5,13 +5,34 @@
         </template>
         <template v-slot:body>
             <details open>
-                <summary>v0.0 Initial Commit - <time>2021-09-04</time></summary>
+                <summary>v0.1 Dimensional Generator - <time>2022-07-17</time></summary>
+                <ul>
+                  <li class="feature">Removed Points</li>
+                  <li class="feature">Added Dimensional Generator</li>
+                  <li class="feature">Added Exponential</li>
+                  <li class="feature">Added Hyperbolic</li>
+                  <li class="feature">Added Cosine Foundation</li>
+                  <li class="feature">Added Exponential Unlock</li>
+                  <li class="feature">Added Hyperbolic Unlock</li>
+                  <li class="feature">Added Exponential Foundation</li>
+                  <li class="feature">Added Hyperbolic Foundation</li>
+                  <li class="balancing">Changed Sine Foundation's effect</li>
+                  <li class="balancing">Rebalanced the entirety of Matter</li>
+                </ul>
+            </details>
+            <details>
+                <summary>v0.0 Initial Commit - <time>2022-07-15</time></summary>
                 This is the first release :D
                 <ul>
-                    <li class="feature">Did everything</li>
-                    <li class="fix">Had some fun</li>
-                    <li class="breaking">Removed everything</li>
-                    <li class="balancing">Created some bugs to fix later</li>
+                    <li class="feature">Added Foundation</li>
+                    <li class="feature">Added Sine</li>
+                    <li class="feature">Added Logarithm</li>
+                    <li class="feature">Added Cosine</li>
+                    <li class="feature">Added Sine Foundation</li>
+                    <li class="feature">Added Sine Boost</li>
+                    <li class="feature">Added Logarithm Unlock</li>
+                    <li class="feature">Added Logarithm Foundation</li>
+                    <li class="feature">Added Cosine Unlock</li>
                 </ul>
             </details>
         </template>
