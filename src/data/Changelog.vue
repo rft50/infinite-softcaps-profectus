@@ -5,19 +5,38 @@
         </template>
         <template v-slot:body>
             <details open>
+                <summary>v0.2 All That Matters - <time>2022-07-17</time></summary>
+                <ul>
+                    <li class="feature">Added Logarithm Boost</li>
+                    <li class="feature">Added Cosine Boost</li>
+                    <li class="feature">Added Exponential Boost</li>
+                    <li class="feature">Added Hyperbolic Boost</li>
+                    <li class="feature">Added Antimatter Unlock</li>
+                    <li class="balancing">Nerfed Cosine's effect</li>
+                    <li class="balancing">Nerfed Cosine Foundation's effect</li>
+                    <li class="balancing">Nerfed Exponential Foundation's effect</li>
+                    <li class="balancing">Nerfed Hyperbolic Foundation's effect</li>
+                    <li class="balancing">Infinitely Softcapped Matter</li>
+                    <li class="balancing">Infinitely Softcapped Logarithm's effect</li>
+                    <li class="balancing">Infinitely Softcapped Exponential's effect</li>
+                    <li class="balancing">Infinitely Softcapped Sine's min and max</li>
+                    <li class="balancing">Infinitely Softcapped Hyperbolic's effect</li>
+                </ul>
+            </details>
+            <details>
                 <summary>v0.1 Dimensional Generator - <time>2022-07-17</time></summary>
                 <ul>
-                  <li class="feature">Removed Points</li>
-                  <li class="feature">Added Dimensional Generator</li>
-                  <li class="feature">Added Exponential</li>
-                  <li class="feature">Added Hyperbolic</li>
-                  <li class="feature">Added Cosine Foundation</li>
-                  <li class="feature">Added Exponential Unlock</li>
-                  <li class="feature">Added Hyperbolic Unlock</li>
-                  <li class="feature">Added Exponential Foundation</li>
-                  <li class="feature">Added Hyperbolic Foundation</li>
-                  <li class="balancing">Changed Sine Foundation's effect</li>
-                  <li class="balancing">Rebalanced the entirety of Matter</li>
+                    <li class="feature">Removed Points</li>
+                    <li class="feature">Added Dimensional Generator</li>
+                    <li class="feature">Added Exponential</li>
+                    <li class="feature">Added Hyperbolic</li>
+                    <li class="feature">Added Cosine Foundation</li>
+                    <li class="feature">Added Exponential Unlock</li>
+                    <li class="feature">Added Hyperbolic Unlock</li>
+                    <li class="feature">Added Exponential Foundation</li>
+                    <li class="feature">Added Hyperbolic Foundation</li>
+                    <li class="balancing">Changed Sine Foundation's effect</li>
+                    <li class="balancing">Rebalanced the entirety of Matter</li>
                 </ul>
             </details>
             <details>

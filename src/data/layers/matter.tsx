@@ -11,10 +11,10 @@ import {createResourceTooltip} from "features/trees/tree";
 import {BaseLayer, createLayer} from "game/layers";
 import type {DecimalSource} from "util/bignum";
 import Decimal, {format} from "util/bignum";
-import {colorText, createLayerTreeNode} from "../common";
-import {BaseBuyable, Buyable, BuyableOptions, createBuyable} from "../../features/buyable";
-import {render, renderCol, renderRow} from "../../util/vue";
-import {computed, createTextVNode, unref} from "vue";
+import {createLayerTreeNode, infiniteSoftcap} from "../common";
+import {createBuyable} from "../../features/buyable";
+import {render, renderRow} from "../../util/vue";
+import {computed} from "vue";
 import player from "../../game/player";
 import {createUpgrade} from "../../features/upgrades/upgrade";
 import {createMilestone} from "../../features/milestones/milestone";
@@ -44,107 +44,193 @@ const layer = createLayer(id, function(this: BaseLayer) {
 
     // upgrades
 
-    const sineFoundationUpgrade = createUpgrade(() => ({
+    const sineBoostUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e3,
+        cost: 10e3,
         display: {
-            title: "Sine Foundation",
-            description: `Multiply Sine's minimum by 1.02 and maximum by 1.05, per Foundation purchased`
+            title: "Sine Boost",
+            description: `Multiply Sine's minimum by 1.5 and maximum by 2, per upgrade bought`
         }
     }))
 
-    const sineBoostUpgrade = createUpgrade(() => ({
+    const sineFoundationUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 100e3,
+        cost: 10e6,
         display: {
-            title: "Sine Boost",
-            description: `Multiply Sine's minimum by 1.5 and maximum by 2, per upgrade purchased`
+            title: "Sine Foundation",
+            description: `Multiply Sine's minimum by 1.02 and maximum by 1.05, per Foundation bought`
         }
     }))
 
     const logarithmUnlockUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 10e6,
+        cost: 1e3,
         display: {
             title: "Logarithm Unlock",
             description: `Unlock Logarithm, which increases Foundation's effect based on matter`
         }
     }))
 
+    const logarithmBoostUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 100e3,
+        display: {
+            title: "Logarithm Boost",
+            description: `Increase Logarithm's exponent by 0.25 per upgrade bought`
+        },
+        visibility() {
+            return logarithmUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
+        }
+    }))
+
     const logarithmFoundationUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e10,
+        cost: 1e18,
         display: {
             title: "Logarithm Foundation",
             description: `Increase Logarithm's exponent by 0.01 per Foundation bought`
+        },
+        visibility() {
+            return logarithmUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
     const cosineUnlockUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e13,
+        cost: 1e11,
         display: {
             title: "Cosine Unlock",
             description: `Unlock Cosine, which decreases buyable levels for cost purposes`
+        },
+        visibility() {
+            return logarithmUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
+        }
+    }))
+
+    const cosineBoostUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e12,
+        display: {
+            title: "Cosine Boost",
+            description: `Increase Cosine's limit by 0.01 per upgrade bought`
+        },
+        visibility() {
+            return cosineUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
     const cosineFoundationUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e15,
+        cost: 1e39,
         display: {
             title: "Cosine Foundation",
-            description: `Increase Cosine's limit by 0.001 per Foundation bought, up to 0.2`
+            description: `Increase Cosine's limit by 0.0001 per Foundation bought, up to 0.2`
+        },
+        visibility() {
+            return cosineUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
     const exponentialUnlockUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e17,
+        cost: 1e14,
         display: {
             title: "Exponential Unlock",
             description: `Unlock Exponential, which decreases buyable costs`
+        },
+        visibility() {
+            return cosineUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
-    const hyperbolicUnlockUpgrade = createUpgrade(() => ({
+    const exponentialBoostUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e23,
+        cost: 1e16,
         display: {
-            title: "Hyperbolic Unlock",
-            description: `Unlock Hyperbolic, which increases Sine's min and max based on matter`
+            title: "Exponential Boost",
+            description: `Gain 10 free levels of Exponential per upgrade bought`
+        },
+        visibility() {
+            return exponentialUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
     const exponentialFoundationUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e31,
+        cost: 1e53,
         display: {
             title: "Exponential Foundation",
-            description: `Increase Exponential's effect by 0.00002 per Foundation bought`
+            description: `Increase Exponential's effect by 0.00001 per Foundation bought`
+        },
+        visibility() {
+            return exponentialUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
+        }
+    }))
+
+    const hyperbolicUnlockUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e30,
+        display: {
+            title: "Hyperbolic Unlock",
+            description: `Unlock Hyperbolic, which increases Sine's min and max based on matter`
+        },
+        visibility() {
+            return exponentialUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
+        }
+    }))
+
+    const hyperbolicBoostUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e48,
+        display: {
+            title: "Hyperbolic Boost",
+            description: `Increase Hyperbolic's exponent to minimum 0.01 per upgrade bought`
+        },
+        visibility() {
+            return hyperbolicUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
     const hyperbolicFoundationUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e35,
+        cost: 1e77,
         display: {
             title: "Hyperbolic Foundation",
-            description: `Increase Hyperbolic's effect by 0.00002 per Foundation bought`
+            description: `Increase Hyperbolic's effect by 0.00001 per Foundation bought`
+        },
+        visibility() {
+            return hyperbolicUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
+        }
+    }))
+
+    const antimatterUnlockUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e120,
+        display: {
+            title: "Antimatter Unlock",
+            description: `Unlock Antimatter, which is a new layer`
+        },
+        visibility() {
+            return hyperbolicUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
     const upgradeData = {
-        sineFoundation: sineFoundationUpgrade,
         sineBoost: sineBoostUpgrade,
+        sineFoundation: sineFoundationUpgrade,
         logarithmUnlock: logarithmUnlockUpgrade,
+        logarithmBoost: logarithmBoostUpgrade,
         logarithmFoundation: logarithmFoundationUpgrade,
-        cosineUnlockUpgrade: cosineUnlockUpgrade,
+        cosineUnlock: cosineUnlockUpgrade,
+        cosineBoost: cosineBoostUpgrade,
         cosineFoundation: cosineFoundationUpgrade,
         exponentialUnlock: exponentialUnlockUpgrade,
-        hyperbolicUnlock: hyperbolicUnlockUpgrade,
+        exponentialBoost: exponentialBoostUpgrade,
         exponentialFoundation: exponentialFoundationUpgrade,
-        hyperbolicFoundation: hyperbolicFoundationUpgrade
+        hyperbolicUnlock: hyperbolicUnlockUpgrade,
+        hyperbolicBoost: hyperbolicBoostUpgrade,
+        hyperbolicFoundation: hyperbolicFoundationUpgrade,
+        antimatterUnlock: antimatterUnlockUpgrade
     }
 
     const upgradeCount = computed(() => {
@@ -172,12 +258,13 @@ const layer = createLayer(id, function(this: BaseLayer) {
 
     const logarithmExponent = computed(() => {
         let exp = new Decimal(1)
+        if (logarithmBoostUpgrade.bought.value) exp = exp.add(Decimal.div(upgradeCount.value, 4))
         if (logarithmFoundationUpgrade.bought.value) exp = exp.add(Decimal.div(foundationBuyable.amount.value, 100))
         return exp
     })
 
     const logarithmLength = computed(() => {
-        return Decimal.div(Decimal.pow(Decimal.log10(Decimal.max(10, points.value)), logarithmExponent.value), 10)
+        return infiniteSoftcap(Decimal.div(Decimal.pow(Decimal.log10(Decimal.max(100, points.value)), logarithmExponent.value), 10))
     })
 
     const logarithmBuyable: any = createBuyable(() => ({
@@ -198,12 +285,16 @@ const layer = createLayer(id, function(this: BaseLayer) {
     const exponentialBase = computed(() => {
         let base = new Decimal(1.05)
 
-        if (exponentialFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.mul(foundationBuyable.amount.value, 0.00002))
+        if (exponentialFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.mul(foundationBuyable.amount.value, 0.00001))
 
         return base
     })
     const exponentialEffect = computed(() => {
-        return Decimal.pow(exponentialBase.value, exponentialBuyable.amount.value)
+        let levels = exponentialBuyable.amount.value
+
+        if (exponentialBoostUpgrade.bought.value) levels = Decimal.add(levels, Decimal.mul(upgradeCount.value, 10))
+
+        return infiniteSoftcap(Decimal.pow(exponentialBase.value, levels))
     })
 
     const exponentialBuyable: any = createBuyable(() => ({
@@ -223,12 +314,12 @@ const layer = createLayer(id, function(this: BaseLayer) {
     const sineMin = computed(() => {
         let count = new Decimal(0.1)
 
-        count = count.mul(Decimal.pow(hyperbolicEffect.value, 0.5))
+        count = count.mul(Decimal.pow(hyperbolicEffect.value, hyperbolicMinExponent.value))
 
         if (sineFoundationUpgrade.bought.value) count = count.mul(Decimal.pow(1.02, foundationBuyable.amount.value))
         if (sineBoostUpgrade.bought.value) count = count.mul(Decimal.pow(1.5, upgradeCount.value))
 
-        return count
+        return infiniteSoftcap(count)
     })
     const sineMax = computed(() => {
         let count = new Decimal(1)
@@ -238,7 +329,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         if (sineFoundationUpgrade.bought.value) count = count.mul(Decimal.pow(1.05, foundationBuyable.amount.value))
         if (sineBoostUpgrade.bought.value) count = count.mul(Decimal.pow(2, upgradeCount.value))
 
-        return count
+        return infiniteSoftcap(count)
     })
 
     const sineTempo = computed(() => {return (Math.sin(player.time * Math.PI / 180 / 120) + 1) / 2})
@@ -263,9 +354,10 @@ const layer = createLayer(id, function(this: BaseLayer) {
 
     const cosineTempo = computed(() => {return (Math.cos(player.time * Math.PI / 180 / 120) + 1) / 2})
     const cosineLimit = computed(() => {
-        let limit = new Decimal(0.2)
+        let limit = new Decimal(0.15)
 
-        if (cosineFoundationUpgrade.bought.value) limit = Decimal.add(limit, Decimal.min(Decimal.mul(foundationBuyable.amount.value, 0.001), 0.2))
+        if (cosineBoostUpgrade.bought.value) limit = Decimal.add(limit, Decimal.div(upgradeCount.value, 100))
+        if (cosineFoundationUpgrade.bought.value) limit = Decimal.add(limit, Decimal.min(Decimal.mul(foundationBuyable.amount.value, 0.0001), 0.2))
 
         return limit
     })
@@ -294,12 +386,19 @@ const layer = createLayer(id, function(this: BaseLayer) {
     const hyperbolicValue = computed(() => {
         let base = new Decimal(1.03)
 
-        if (hyperbolicFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.mul(foundationBuyable.amount.value, 0.00002))
+        if (hyperbolicFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.mul(foundationBuyable.amount.value, 0.00001))
 
         return base
     })
     const hyperbolicEffect = computed(() => {
-        return Decimal.pow(hyperbolicValue.value, hyperbolicBuyable.amount.value)
+        return infiniteSoftcap(Decimal.pow(hyperbolicValue.value, hyperbolicBuyable.amount.value))
+    })
+    const hyperbolicMinExponent = computed(() => {
+        let exp = new Decimal(0.5)
+
+        if (hyperbolicBoostUpgrade.bought.value) exp = exp.add(Decimal.div(upgradeCount.value, 100))
+
+        return exp
     })
 
     const hyperbolicBuyable: any = createBuyable(() => ({
@@ -308,7 +407,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         display() {
             return {
                 title: "Hyperbolic",
-                description: `Multiply Sine's maximum by ${format(hyperbolicValue.value)}, and min by sqrt of that`
+                description: `Multiply Sine's maximum by ${format(hyperbolicValue.value)}, and min by ^${format(hyperbolicMinExponent.value)} of that`
             }
         },
         visibility() {
@@ -350,6 +449,9 @@ const layer = createLayer(id, function(this: BaseLayer) {
         },
         style: {
             width: "250px"
+        },
+        visibility() {
+            return logarithmUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
@@ -363,6 +465,9 @@ const layer = createLayer(id, function(this: BaseLayer) {
         },
         style: {
             width: "250px"
+        },
+        visibility() {
+            return exponentialUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
@@ -389,6 +494,9 @@ const layer = createLayer(id, function(this: BaseLayer) {
         },
         style: {
             width: "250px"
+        },
+        visibility() {
+            return cosineUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
@@ -402,6 +510,9 @@ const layer = createLayer(id, function(this: BaseLayer) {
         },
         style: {
             width: "250px"
+        },
+        visibility() {
+            return hyperbolicUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
         }
     }))
 
@@ -438,7 +549,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         return base
     })
     const points = createResource<DecimalSource>(computed(() => {
-        return Decimal.mul(Decimal.mul(length.value, width.value), height.value)
+        return infiniteSoftcap(Decimal.mul(Decimal.mul(length.value, width.value), height.value))
     }), "matter");
 
     // serialization and stuff
@@ -494,8 +605,9 @@ const layer = createLayer(id, function(this: BaseLayer) {
                 {render(dimensionalGeneratorDisplay)}
                 {renderRow(foundationBuyable, logarithmBuyable, exponentialBuyable)}
                 {renderRow(sineBuyable, cosineBuyable, hyperbolicBuyable)}
-                {renderRow(sineFoundationUpgrade, sineBoostUpgrade, logarithmUnlockUpgrade, logarithmFoundationUpgrade, cosineUnlockUpgrade)}
-                {renderRow(cosineFoundationUpgrade, exponentialUnlockUpgrade, hyperbolicUnlockUpgrade, exponentialFoundationUpgrade, hyperbolicFoundationUpgrade)}
+                {renderRow(sineBoostUpgrade, logarithmBoostUpgrade, cosineBoostUpgrade, exponentialBoostUpgrade, hyperbolicBoostUpgrade)}
+                {renderRow(sineFoundationUpgrade, logarithmFoundationUpgrade, cosineFoundationUpgrade, exponentialFoundationUpgrade, hyperbolicFoundationUpgrade)}
+                {renderRow(logarithmUnlockUpgrade, cosineUnlockUpgrade, exponentialUnlockUpgrade, hyperbolicUnlockUpgrade, antimatterUnlockUpgrade)}
                 {renderRow(foundationMilestone, logarithmMilestone, exponentialMilestone)}
                 {renderRow(sineMilestone, cosineMilestone, hyperbolicMilestone)}
             </>
