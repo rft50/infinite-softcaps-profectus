@@ -5,6 +5,14 @@
         </template>
         <template v-slot:body>
             <details open>
+                <summary>v0.3 Antimaterialism - <time>2022-07-17</time></summary>
+                <ul>
+                    <li class="feature">Added Antimatter Layer</li>
+                    <li class="feature">Added Antimatter Dimensions</li>
+                    <li class="feature">Added Dimension Boost/Shift</li>
+                </ul>
+            </details>
+            <details>
                 <summary>v0.2 All That Matters - <time>2022-07-17</time></summary>
                 <ul>
                     <li class="feature">Added Logarithm Boost</li>
@@ -12,6 +20,7 @@
                     <li class="feature">Added Exponential Boost</li>
                     <li class="feature">Added Hyperbolic Boost</li>
                     <li class="feature">Added Antimatter Unlock</li>
+                    <li class="balancing">Rebalanced the entirety of Matter again</li>
                     <li class="balancing">Nerfed Cosine's effect</li>
                     <li class="balancing">Nerfed Cosine Foundation's effect</li>
                     <li class="balancing">Nerfed Exponential Foundation's effect</li>
@@ -35,6 +44,7 @@
                     <li class="feature">Added Hyperbolic Unlock</li>
                     <li class="feature">Added Exponential Foundation</li>
                     <li class="feature">Added Hyperbolic Foundation</li>
+                    <li class="feature">Added Autobuyer Milestones to Matter</li>
                     <li class="balancing">Changed Sine Foundation's effect</li>
                     <li class="balancing">Rebalanced the entirety of Matter</li>
                 </ul>

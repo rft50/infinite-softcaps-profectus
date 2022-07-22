@@ -10,6 +10,7 @@ import {format, formatTime} from "util/bignum";
 import {render} from "util/vue";
 import {computed} from "vue";
 import matter from "./layers/matter";
+import antimatter from "./layers/antimatter";
 
 /**
  * @hidden
@@ -17,7 +18,7 @@ import matter from "./layers/matter";
 export const main = createLayer("main", () => {
 
     const tree = createTree(() => ({
-        nodes: [[matter.treeNode]],
+        nodes: [[matter.treeNode, antimatter.treeNode]],
         branches: [],
         onReset() {
         },
@@ -51,7 +52,7 @@ export const main = createLayer("main", () => {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<PlayerData>
-): Array<GenericLayer> => [main, matter];
+): Array<GenericLayer> => [main, matter, antimatter];
 
 /**
  * A computed ref whose value is true whenever the game is over.
