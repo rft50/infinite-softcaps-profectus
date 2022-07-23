@@ -2,7 +2,7 @@
  * @module
  * @hidden
  */
-import {jsx} from "features/feature";
+import {jsx, Visibility} from "features/feature";
 import {createReset} from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import {createResource} from "features/resources/resource";
@@ -11,13 +11,16 @@ import {createResourceTooltip} from "features/trees/tree";
 import {BaseLayer, createLayer} from "game/layers";
 import type {DecimalSource} from "util/bignum";
 import Decimal, {format} from "util/bignum";
-import {createLayerTreeNode} from "../common";
+import {createLayerTreeNode, infiniteSoftcap} from "../common";
 import {render, renderRow} from "../../util/vue";
 import {computed, ComputedRef, watch} from "vue";
-import {createClickable, GenericClickable} from "../../features/clickables/clickable";
+import {createClickable, GenericClickable, setupAutoClick} from "../../features/clickables/clickable";
 import {persistent} from "../../game/persistence";
 import antimatter from "./antimatter";
 import {Buyable, BuyableOptions, createBuyable} from "../../features/buyable";
+import {globalBus} from "../../game/events";
+import {createUpgrade} from "../../features/upgrades/upgrade";
+import matter from "./matter";
 
 type DimensionData = {
     multiplier: ComputedRef<Decimal>
@@ -86,18 +89,26 @@ const layer = createLayer(id, function(this: BaseLayer) {
         }
     }
 
+    const dimensionBaseMultiplier = computed(() => {
+        let mul = Decimal.pow(1.5, dimensionShiftBuyable.amount.value)
+
+        if (lowDimensionalityUpgrade.bought.value) mul = mul.mul(dimensionCount.value)
+        if (highDimensionalityUpgrade.bought.value) mul = mul.mul(dimensionLimit.value)
+
+        return mul
+    })
+
     function dimensionMultiplier(idx: number) {
-        return computed(() => Decimal.mul(Decimal.pow(2, boughtDimensionCount(idx)),
-            Decimal.pow(1.5, dimensionShiftBuyable.amount.value)))
+        return computed(() => infiniteSoftcap(Decimal.mul(dimensionBaseMultiplier.value, Decimal.pow(2, boughtDimensionCount(idx)))))
     }
 
-    function dimensionDataTwoDownRow(idx: number) {
-        let antimatterBoughtCount = computed(() => dimensionPersistent.value[idx-1]?.antimatterBoughtCount)
-        let antimatterCostFunction = dimensionCostFunction(idx, antimatterBoughtCount)
-        let specialBoughtCount = computed(() => dimensionPersistent.value[idx-1]?.specialBoughtCount)
-        let specialCostFunction = dimensionCostFunction(idx - 1, specialBoughtCount)
-        let specialDimensionCount = dimensionCountComputable(idx - 2)
-        return {
+    const dimensionDataTwoDownRow = (idx: number) => {
+        const antimatterBoughtCount = computed(() => dimensionPersistent.value[idx-1]?.antimatterBoughtCount)
+        const antimatterCostFunction = dimensionCostFunction(idx, antimatterBoughtCount)
+        const specialBoughtCount = computed(() => dimensionPersistent.value[idx-1]?.specialBoughtCount)
+        const specialCostFunction = dimensionCostFunction(idx - 1, specialBoughtCount)
+        const specialDimensionCount = dimensionCountComputable(idx - 2)
+        const data = {
             multiplier: dimensionMultiplier(idx),
             antimatterClickable: createClickable(() => ({
                 display: jsx(() => (<>
@@ -132,14 +143,21 @@ const layer = createLayer(id, function(this: BaseLayer) {
                 }
             }))
         }
+
+        const autobuyComputed = computed(() => Decimal.gte(dimensionAutobuyerCount.value, idx))
+
+        setupAutoClick(this, data.antimatterClickable, autobuyComputed)
+        setupAutoClick(this, data.specialClickable, autobuyComputed)
+
+        return data
     }
 
-    function dimensionDataTwinRow(idx: number) {
-        let antimatterBoughtCount = computed(() => dimensionPersistent.value[idx - 1]?.antimatterBoughtCount)
-        let antimatterCostFunction = dimensionCostFunction(idx, antimatterBoughtCount)
-        let specialBoughtCount = computed(() => dimensionPersistent.value[idx - 1]?.specialBoughtCount)
-        let specialCostFunction = dimensionCostFunction(idx, specialBoughtCount)
-        return {
+    const dimensionDataTwinRow = (idx: number) => {
+        const antimatterBoughtCount = computed(() => dimensionPersistent.value[idx - 1]?.antimatterBoughtCount)
+        const antimatterCostFunction = dimensionCostFunction(idx, antimatterBoughtCount)
+        const specialBoughtCount = computed(() => dimensionPersistent.value[idx - 1]?.specialBoughtCount)
+        const specialCostFunction = dimensionCostFunction(idx, specialBoughtCount)
+        const data = {
             multiplier: dimensionMultiplier(idx),
             antimatterClickable: createClickable(() => ({
                 display: jsx(() => (<>
@@ -174,6 +192,13 @@ const layer = createLayer(id, function(this: BaseLayer) {
                 }
             }))
         }
+
+        const autobuyComputed = computed(() => Decimal.gte(dimensionAutobuyerCount.value, idx))
+
+        setupAutoClick(this, data.antimatterClickable, autobuyComputed)
+        setupAutoClick(this, data.specialClickable, autobuyComputed)
+
+        return data
     }
 
     // dimension data
@@ -191,7 +216,9 @@ const layer = createLayer(id, function(this: BaseLayer) {
     ]
 
     function correctDimensionCount() {
-        while (dimensionData.length < dimensionCount.value.toNumber()) { // increment
+        let dimCount = dimensionCount.value.toNumber()
+
+        while (dimensionData.length < dimCount) { // increment
             let i = dimensionData.length
             dimensionData[i] = dimensionDataTwoDownRow(i+1)
             dimensionIndexArray[i] = i+1
@@ -199,11 +226,17 @@ const layer = createLayer(id, function(this: BaseLayer) {
                 dimensionPersistent.value[i] = persistentEmptyRow()
             }
         }
+        while (dimensionData.length > dimCount) { // decrement
+            let i = dimensionData.length - 1
+            if (dimensionData[i] != null) dimensionData.pop()
+            if (dimensionIndexArray[i] != null) dimensionIndexArray.pop()
+            if (dimensionPersistent.value[i] != null) dimensionPersistent.value.pop()
+        }
     }
 
     // other dimensional things
 
-    const lastDimensionResource = createResource(computed(() => dimensionCountComputable(dimensionCount.value.toNumber()).value), `dimension ?`)
+    const lastDimensionResource = createResource(computed(() => dimensionCountComputable(dimensionCount.value.toNumber()).value), `dimension 4`)
 
     const dimensionShiftBuyable: Buyable<BuyableOptions> = createBuyable(() => ({
         resource: lastDimensionResource,
@@ -240,6 +273,74 @@ const layer = createLayer(id, function(this: BaseLayer) {
         lastDimensionResource.displayName = `dimension ${dimensionCount.value?.toNumber()}`
     })
 
+    // upgrades
+
+    const lowDimensionalityUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 100,
+        display: {
+            title: "Low Dimensionality",
+            description: `Multiply each dimension by the amount of dimensions currently available`
+        }
+    }))
+
+    const upgradeAutobuyerUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e25,
+        display: {
+            title: "Upgrade Autobuyer",
+            description: `Gain 1 Dimension Autobuyer per Upgrade Bought`
+        }
+    }))
+
+    const highDimensionalityUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e50,
+        display: {
+            title: "High Dimensionality",
+            description: `Multiply each dimension by the amount of dimensions currently available`
+        }
+    }))
+
+    const shiftingAutobuyerUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e75,
+        display: {
+            title: "Shifting Autobuyer",
+            description: `Gain 0.5 Dimension Autobuyer per Dimension Boost/Shift`
+        }
+    }))
+
+    const exoticMatterUnlockUpgrade = createUpgrade(() => ({
+        resource: points,
+        cost: 1e100,
+        display: {
+            title: "Exotic Matter Unlock",
+            description: `Unlock Exotic Matter, which is a new layer`
+        }
+    }))
+
+    const upgradeData = {
+        lowDimensionality: lowDimensionalityUpgrade,
+        upgradeAutobuyer: upgradeAutobuyerUpgrade,
+        highDimensionality: highDimensionalityUpgrade,
+        shiftingAutobuyer: shiftingAutobuyerUpgrade,
+        exoticMatterUnlock: exoticMatterUnlockUpgrade
+    }
+
+    const upgradeCount = computed(() => {
+        return Object.values(upgradeData).filter(u => u.bought.value).length
+    })
+
+    const dimensionAutobuyerCount = computed(() => {
+        let count = Decimal.dZero
+
+        if (upgradeAutobuyerUpgrade.bought.value) count = count.add(upgradeCount.value)
+        if (shiftingAutobuyerUpgrade.bought.value) count = count.add(Decimal.div(dimensionShiftBuyable.amount.value, 2))
+
+        return count
+    })
+
     // serialization and stuff
 
     const reset = createReset(() => ({
@@ -249,21 +350,34 @@ const layer = createLayer(id, function(this: BaseLayer) {
     const treeNode = createLayerTreeNode(() => ({
         layerID: id,
         color,
-        reset
+        reset,
+        visibility: computed(() => {
+            return matter.upgradeData.antimatterUnlock.bought.value ? Visibility.Visible : Visibility.None
+        })
     }));
     addTooltip(treeNode, {
         display: createResourceTooltip(points),
         pinnable: true
     });
 
-    this.on("preUpdate", () => { // TODO replace with global bus onLoad when that exists
+    globalBus.on("onLoad", () => {
         correctDimensionCount()
     })
 
     this.on("preUpdate", (dt) => {
-        points.value = Decimal.add(points.value, Decimal.mul(dimensionData[0].multiplier.value, Decimal.mul(dimensionCountComputable(1).value, dt)))
+        points.value = Decimal.add(points.value, Decimal.mul(
+            dt,
+            Decimal.mul(
+                infiniteSoftcap(dimensionCountComputable(1).value),
+                dimensionData[0].multiplier.value)
+        ))
         for (let i = 2; i <= dimensionIndexArray.length; i++) {
-            addDimensionCount(i-1, Decimal.mul(dimensionData[i-1].multiplier.value, Decimal.mul(dimensionCountComputable(i).value, dt)))
+            addDimensionCount(i-1, Decimal.mul(
+                dt,
+                Decimal.mul(
+                    infiniteSoftcap(dimensionCountComputable(i).value),
+                    dimensionData[i-1].multiplier.value)
+            ))
         }
     })
 
@@ -288,11 +402,13 @@ const layer = createLayer(id, function(this: BaseLayer) {
                 <MainDisplay resource={points} color={color} />
                 {render(dimensionRender)}
                 {renderRow(dimensionShiftBuyable)}
+                {renderRow(lowDimensionalityUpgrade, upgradeAutobuyerUpgrade, highDimensionalityUpgrade, shiftingAutobuyerUpgrade, exoticMatterUnlockUpgrade)}
             </>
         )),
         treeNode,
         dimensionPersistent,
-        dimensionShiftBuyable
+        dimensionShiftBuyable,
+        upgradeData
     };
 });
 

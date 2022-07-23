@@ -58,7 +58,7 @@ export const getInitialLayers = (
  * A computed ref whose value is true whenever the game is over.
  */
 export const hasWon = computed(() => {
-    return matter.upgradeData.antimatterUnlock.bought.value;
+    return antimatter.upgradeData.exoticMatterUnlock.bought.value;
 });
 
 /**

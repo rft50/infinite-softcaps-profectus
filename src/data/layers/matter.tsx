@@ -205,7 +205,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
 
     const antimatterUnlockUpgrade = createUpgrade(() => ({
         resource: points,
-        cost: 1e120,
+        cost: 1e100,
         display: {
             title: "Antimatter Unlock",
             description: `Unlock Antimatter, which is a new layer`
@@ -549,7 +549,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         return base
     })
     const points = createResource<DecimalSource>(computed(() => {
-        return infiniteSoftcap(Decimal.mul(Decimal.mul(length.value, width.value), height.value))
+        return Decimal.mul(Decimal.mul(length.value, width.value), height.value)
     }), "matter");
 
     // serialization and stuff

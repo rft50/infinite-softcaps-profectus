@@ -5,7 +5,20 @@
         </template>
         <template v-slot:body>
             <details open>
-                <summary>v0.3 Antimaterialism - <time>2022-07-17</time></summary>
+                <summary>v0.4 Antiupgrade - <time>2022-07-22</time></summary>
+                <ul>
+                    <li class="feature">Added Antimatter Layer</li>
+                    <li class="feature">Added Antimatter Dimensions</li>
+                    <li class="feature">Added Dimension Boost/Shift</li>
+                    <li class="balancing">Removed Infinite Softcap from Matter</li>
+                    <li class="balancing">Reduced 'Antimatter Unlock' Cost to e100 Matter</li>
+                    <li class="balancing">Infinitely Softcapped Effective Dimension Count</li>
+                    <li class="balancing">Infinitely Softcapped Dimension Multiplier</li>
+                    <li class="balancing">Locked Antimatter behind its Unlock</li>
+                </ul>
+            </details>
+            <details>
+                <summary>v0.3 Antimaterialism - <time>2022-07-21</time></summary>
                 <ul>
                     <li class="feature">Added Antimatter Layer</li>
                     <li class="feature">Added Antimatter Dimensions</li>

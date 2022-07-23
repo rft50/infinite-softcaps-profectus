@@ -321,7 +321,7 @@ export function colorText(textToColor: string, color = "var(--accent2)"): JSX.El
 }
 
 export function infiniteSoftcap(input: Decimal): Decimal {
-    if (input.lt(1e100)) return input
+    if (Decimal.lt(input, 1e100)) return input
     let bracket = input.log(1e100).add(1).log2().floor()
     let taxable = input.div(new Decimal(1e100).pow(new Decimal(2).pow(bracket).minus(1)))
     return new Decimal("1e100").pow(bracket).mul(taxable.pow(new Decimal("0.5").pow(bracket)))
