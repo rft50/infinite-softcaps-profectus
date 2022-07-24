@@ -369,6 +369,74 @@ export function createPolynomialScaling(
 }
 
 /**
+ * Creates a scaling function based off the formula `base ^ (baseResource / coefficient - 1)`.
+ * If the baseResource is less than the coefficient then the currentGain will be 0.
+ * @param base The base variable in the scaling formula.
+ * @param coefficient The exponent variable in the scaling formula.
+ * @example
+ * A scaling function created via `createExponentialScaling(3, 10)` would produce the following values:
+ * | Base Resource | Current Gain |
+ * | ------------- | ------------ |
+ * | 10            | 1            |
+ * | 20            | 3            |
+ * | 30            | 9            |
+ */
+export function createExponentialScaling(
+    base: Computable<DecimalSource>,
+    coefficient: Computable<DecimalSource>
+): ScalingFunction {
+    const processedBase = convertComputable(base)
+    const processedCoefficient = convertComputable(coefficient)
+    return {
+        currentGain(conversion) {
+            let baseAmount: DecimalSource = unref(conversion.baseResource.value)
+            if (conversion.costModifier) {
+                baseAmount = conversion.costModifier.apply(baseAmount)
+            }
+            if (Decimal.lt(baseAmount, unref(processedBase))) {
+                return 0
+            }
+
+            const gain = Decimal.pow(unref(processedBase), Decimal.div(baseAmount, unref(processedCoefficient)).sub(1))
+
+            if (gain.isNan()) {
+                return 0
+            }
+            return gain
+        },
+        currentAt(conversion) {
+            let current: DecimalSource = unref(conversion.currentGain)
+            if (conversion.gainModifier) {
+                current = conversion.gainModifier.revert(current)
+            }
+            current = Decimal.max(0, current)
+                .log(unref(processedBase))
+                .add(1)
+                .mul(unref(processedCoefficient))
+            if (conversion.costModifier) {
+                current = conversion.costModifier.revert(current)
+            }
+            return current;
+        },
+        nextAt(conversion) {
+            let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1).floor()
+            if (conversion.gainModifier) {
+                next = conversion.gainModifier.revert(next)
+            }
+            next = Decimal.max(0, next)
+                .log(unref(processedBase))
+                .add(1)
+                .mul(unref(processedCoefficient))
+                .max(unref(processedCoefficient))
+            if (conversion.costModifier) {
+                next = conversion.costModifier.revert(next)
+            }
+            return next;
+        }
+    }
+}
+
+/**
  * Creates a conversion that simply adds to the gainResource amount upon converting.
  * This is similar to the behavior of "normal" layers in The Modding Tree.
  * This is equivalent to just calling createConversion directly.

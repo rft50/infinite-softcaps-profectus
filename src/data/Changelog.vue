@@ -5,6 +5,15 @@
         </template>
         <template v-slot:body>
             <details open>
+                <summary>v0.5 Nothing That Matters - <time>2022-07-22</time></summary>
+                <ul>
+                    <li class="feature">Added Infinity Layer</li>
+                    <li class="balancing">Hardcapped 'Logarithm Foundation' to +40</li>
+                    <li class="balancing">Hardcapped 'Exponential Foundation' to +0.02</li>
+                    <li class="balancing">Hardcapped 'Hyperbolic Foundation to +0.03</li>
+                </ul>
+            </details>
+            <details>
                 <summary>v0.4 Antiupgrade - <time>2022-07-22</time></summary>
                 <ul>
                     <li class="feature">Added Antimatter Layer</li>

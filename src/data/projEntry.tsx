@@ -6,11 +6,12 @@ import type {GenericLayer} from "game/layers";
 import {createLayer} from "game/layers";
 import type {PlayerData} from "game/player";
 import player from "game/player";
-import {format, formatTime} from "util/bignum";
+import Decimal, {format, formatTime} from "util/bignum";
 import {render} from "util/vue";
 import {computed} from "vue";
 import matter from "./layers/matter";
 import antimatter from "./layers/antimatter";
+import infinity from "./layers/infinity";
 
 /**
  * @hidden
@@ -18,8 +19,14 @@ import antimatter from "./layers/antimatter";
 export const main = createLayer("main", () => {
 
     const tree = createTree(() => ({
-        nodes: [[matter.treeNode, antimatter.treeNode]],
-        branches: [],
+        nodes: [
+            [matter.treeNode, antimatter.treeNode],
+            [infinity.treeNode]
+        ],
+        branches: [
+            {startNode: matter.treeNode, endNode: infinity.treeNode},
+            {startNode: antimatter.treeNode, endNode: infinity.treeNode}
+        ],
         onReset() {
         },
         resetPropagation: branchedResetPropagation
@@ -52,13 +59,13 @@ export const main = createLayer("main", () => {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<PlayerData>
-): Array<GenericLayer> => [main, matter, antimatter];
+): Array<GenericLayer> => [main, matter, antimatter, infinity];
 
 /**
  * A computed ref whose value is true whenever the game is over.
  */
 export const hasWon = computed(() => {
-    return antimatter.upgradeData.exoticMatterUnlock.bought.value;
+    return antimatter.upgradeData.exoticMatterUnlock.bought.value || Decimal.gt(infinity.points.value, 0);
 });
 
 /**

@@ -88,7 +88,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         cost: 1e18,
         display: {
             title: "Logarithm Foundation",
-            description: `Increase Logarithm's exponent by 0.01 per Foundation bought`
+            description: `Increase Logarithm's exponent by 0.01 per Foundation bought, up to 40`
         },
         visibility() {
             return logarithmUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
@@ -160,7 +160,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         cost: 1e53,
         display: {
             title: "Exponential Foundation",
-            description: `Increase Exponential's effect by 0.00001 per Foundation bought`
+            description: `Increase Exponential's effect by 0.00001 per Foundation bought, up to 0.02`
         },
         visibility() {
             return exponentialUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
@@ -196,7 +196,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         cost: 1e77,
         display: {
             title: "Hyperbolic Foundation",
-            description: `Increase Hyperbolic's effect by 0.00001 per Foundation bought`
+            description: `Increase Hyperbolic's effect by 0.00001 per Foundation bought, up to 0.03`
         },
         visibility() {
             return hyperbolicUnlockUpgrade.bought.value ? Visibility.Visible : Visibility.None
@@ -259,7 +259,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
     const logarithmExponent = computed(() => {
         let exp = new Decimal(1)
         if (logarithmBoostUpgrade.bought.value) exp = exp.add(Decimal.div(upgradeCount.value, 4))
-        if (logarithmFoundationUpgrade.bought.value) exp = exp.add(Decimal.div(foundationBuyable.amount.value, 100))
+        if (logarithmFoundationUpgrade.bought.value) exp = exp.add(Decimal.min(40, Decimal.div(foundationBuyable.amount.value, 100)))
         return exp
     })
 
@@ -285,7 +285,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
     const exponentialBase = computed(() => {
         let base = new Decimal(1.05)
 
-        if (exponentialFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.mul(foundationBuyable.amount.value, 0.00001))
+        if (exponentialFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.min(0.02, Decimal.mul(foundationBuyable.amount.value, 0.00001)))
 
         return base
     })
@@ -386,7 +386,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
     const hyperbolicValue = computed(() => {
         let base = new Decimal(1.03)
 
-        if (hyperbolicFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.mul(foundationBuyable.amount.value, 0.00001))
+        if (hyperbolicFoundationUpgrade.bought.value) base = Decimal.add(base, Decimal.min(0.03, Decimal.mul(foundationBuyable.amount.value, 0.00001)))
 
         return base
     })

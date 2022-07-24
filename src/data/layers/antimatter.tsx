@@ -216,23 +216,30 @@ const layer = createLayer(id, function(this: BaseLayer) {
     ]
 
     function correctDimensionCount() {
-        let dimCount = dimensionCount.value.toNumber()
+        let dimCount = dimensionCount.value.floor().toNumber()
 
         while (dimensionData.length < dimCount) { // increment
-            let i = dimensionData.length
-            dimensionData[i] = dimensionDataTwoDownRow(i+1)
-            dimensionIndexArray[i] = i+1
-            if (dimensionPersistent.value[i] == null) {
-                dimensionPersistent.value[i] = persistentEmptyRow()
-            }
+            dimensionData.push(dimensionDataTwoDownRow(dimensionData.length + 1))
         }
         while (dimensionData.length > dimCount) { // decrement
-            let i = dimensionData.length - 1
-            if (dimensionData[i] != null) dimensionData.pop()
-            if (dimensionIndexArray[i] != null) dimensionIndexArray.pop()
-            if (dimensionPersistent.value[i] != null) dimensionPersistent.value.pop()
+            dimensionData.pop()
+        }
+
+        while (dimensionIndexArray.length < dimCount) { // increment
+            dimensionIndexArray.push(dimensionIndexArray.length + 1)
+        }
+        while (dimensionIndexArray.length > dimCount) { // decrement
+            dimensionIndexArray.pop()
+        }
+
+        while (dimensionPersistent.value.length < dimCount) { // increment
+            dimensionPersistent.value.push(persistentEmptyRow())
+        }
+        while (dimensionPersistent.value.length > dimCount) { // decrement
+            dimensionPersistent.value.pop()
         }
     }
+
 
     // other dimensional things
 
@@ -259,8 +266,6 @@ const layer = createLayer(id, function(this: BaseLayer) {
             }
         },
         onPurchase() {
-            correctDimensionCount()
-
             // reset dimension data
             points.value = Decimal.dTen
             dimensionIndexArray.forEach(i => {
@@ -270,6 +275,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
     }))
 
     watch(dimensionCount, () => {
+        correctDimensionCount()
         lastDimensionResource.displayName = `dimension ${dimensionCount.value?.toNumber()}`
     })
 
@@ -385,7 +391,7 @@ const layer = createLayer(id, function(this: BaseLayer) {
         <table>
             {dimensionIndexArray.map((i) => <tr>
                 <td>Dimension {i}</td>
-                <td>{format(dimensionCountComputable(i).value)}</td>
+                <td style="color: #DC336B">{format(dimensionCountComputable(i).value)}</td>
                 <td>x{format(dimensionData[i - 1]?.multiplier?.value)}</td>
                 <td>{render(dimensionData[i - 1]?.antimatterClickable)}</td>
                 <td>{render(dimensionData[i - 1]?.specialClickable)}</td>
@@ -399,7 +405,9 @@ const layer = createLayer(id, function(this: BaseLayer) {
         points,
         display: jsx(() => (
             <>
+                <div>Each Dimension produces the dimension before it</div>
                 <MainDisplay resource={points} color={color} />
+                {dimensionAutobuyerCount.value.gt(0) ? `You have ${format(dimensionAutobuyerCount.value)} dimension autobuyers` : ""}
                 {render(dimensionRender)}
                 {renderRow(dimensionShiftBuyable)}
                 {renderRow(lowDimensionalityUpgrade, upgradeAutobuyerUpgrade, highDimensionalityUpgrade, shiftingAutobuyerUpgrade, exoticMatterUnlockUpgrade)}
