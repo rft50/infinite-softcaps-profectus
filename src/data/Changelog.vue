@@ -5,7 +5,15 @@
         </template>
         <template v-slot:body>
             <details open>
-                <summary>v0.5 Nothing That Matters - <time>2022-07-22</time></summary>
+                <summary>v1.0 Infinite Matter - <time>2022-07-29</time></summary>
+                <ul>
+                    <li class="feature">Added hyper</li>
+                    <li class="feature">Added Antiboost Unlock and Antiboost</li>
+                    <li class="feature">Added Cosecant, Secant, Hyperbolic, and Foundationless</li>
+                </ul>
+            </details>
+            <details>
+                <summary>v0.5 Nothing That Matters - <time>2022-07-23</time></summary>
                 <ul>
                     <li class="feature">Added Infinity Layer</li>
                     <li class="balancing">Hardcapped 'Logarithm Foundation' to +40</li>
